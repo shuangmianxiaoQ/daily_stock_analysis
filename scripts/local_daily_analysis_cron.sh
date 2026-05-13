@@ -3,7 +3,7 @@ set -euo pipefail
 
 CONTAINER="${CONTAINER:-daily-stock-analysis-webui}"
 MODE="${MODE:-full}"
-FORCE_RUN="${FORCE_RUN:-false}"
+FORCE_RUN="${FORCE_RUN:-true}"
 LOG_FILE="${LOG_FILE:-/app/logs/scheduled_analysis.log}"
 LOCK_FILE="${LOCK_FILE:-/tmp/daily-stock-analysis-scheduled.lock}"
 
@@ -42,7 +42,7 @@ flock -n "$LOCK_FILE" bash -s <<'RUN'
 set +e
 cd /app
 printf '\n===== scheduled analysis start %s | mode=%s | force=%s =====\n' "$(TZ=Asia/Shanghai date '+%F %T')" "$MODE" "$FORCE_RUN" >> "$LOG_FILE"
-python main.py --no-notify $MODE_ARGS $FORCE_ARGS >> "$LOG_FILE" 2>&1
+env RUN_IMMEDIATELY=true python main.py --no-notify $MODE_ARGS $FORCE_ARGS >> "$LOG_FILE" 2>&1
 rc=$?
 printf '===== scheduled analysis end %s | exit=%s =====\n' "$(TZ=Asia/Shanghai date '+%F %T')" "$rc" >> "$LOG_FILE"
 exit "$rc"

@@ -6,7 +6,7 @@ RUN_SCRIPT="$REPO_DIR/scripts/local_daily_analysis_cron.sh"
 LOG_HOST="$REPO_DIR/logs/scheduled_analysis.log"
 WEB_URL="https://stock.12161216.xyz"
 MODE="${MODE:-full}"
-FORCE_RUN="${FORCE_RUN:-false}"
+FORCE_RUN="${FORCE_RUN:-true}"
 
 start_ts=$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')
 start_epoch=$(date +%s)
@@ -34,10 +34,20 @@ if [ -f "$LOG_HOST" ]; then
   latest_tail=$(tail -n 8 "$LOG_HOST" | sed 's/[[:cntrl:]]//g')
 fi
 
+run_state="可能未真正执行"
+if printf '%s\n' "$latest_tail" | grep -q '配置为不立即运行分析'; then
+  emoji="⚠️"
+  status_text="跳过"
+elif [ "$rc" -eq 0 ]; then
+  run_state="已触发分析"
+else
+  run_state="执行失败"
+fi
+
 cat <<MSG
 ${emoji} 每日股票分析已${status_text}
 时间：${start_ts} → ${end_ts}（${minutes}分${seconds}秒）
-模式：${MODE}，强制运行：${FORCE_RUN}
+模式：${MODE}，强制运行：${FORCE_RUN}，状态：${run_state}
 查看：${WEB_URL}
 
 最近日志：
